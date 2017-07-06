@@ -12,8 +12,8 @@ library(maps)
 library(rworldmap)
 
 ## read in data
-df5 <- read.csv('2015.csv')
-df6 <- read.csv('2016.csv')
+df5 <- read.csv('2015.csv', stringsAsFactors = FALSE)
+df6 <- read.csv('2016.csv', stringsAsFactors = FALSE)
 
 str(df5)
 str(df6)
@@ -29,7 +29,7 @@ dim(c_df5)
 dim(c_df6)
 # mismatched dim -> need to clean country entries
 
-c_df6$Country[df6$Country == 'Somaliland Region Namibia'] =  'Somaliland region'
+c_df6$Country[c_df6$Country == 'Somaliland Region'] =  'Somaliland region'
 dropm6 <- c_df6$Country[!c_df6$Country %in% c_df5$Country] #missing country filter
 dropm5 <- c_df5$Country[!c_df5$Country %in% c_df6$Country] #missing country filter
 f_df5 <- c_df5 %>% filter(!Country %in% dropm5) #apply filter
