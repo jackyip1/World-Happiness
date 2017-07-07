@@ -15,12 +15,7 @@ library(rworldmap)
 df5 <- read.csv('2015.csv', stringsAsFactors = FALSE)
 df6 <- read.csv('2016.csv', stringsAsFactors = FALSE)
 
-str(df5)
-str(df6)
-
 #fix bad column names, tselect columns of interes
-
-
 c_df5 <- df5 %>% select(Country,Region,Happiness_Rank=Happiness.Rank,Happiness_Score=Happiness.Score,GDP=Economy..GDP.per.Capita.,Family,Life_Expectancy=Health..Life.Expectancy.,Government_Corruption=Trust..Government.Corruption.)
 c_df6 <- df6 %>% select(Country,Region,Happiness_Rank=Happiness.Rank,Happiness_Score=Happiness.Score,GDP=Economy..GDP.per.Capita.,Family,Life_Expectancy=Health..Life.Expectancy.,Government_Corruption=Trust..Government.Corruption.)
 
@@ -43,15 +38,16 @@ f_df6$Country %in% f_df5$Country #all good!
 head(f_df5)
 head(f_df6)
 unique(f_df5$Region)
+unique(f_df6$Region)
 
-#merge data from 2015 & 2016
-df1<-merge(f_df5[,], f_df6[,], by.x = "Country", by.y = "Country") %>% select(-Region.y)
+#merge data from 2015 & 2016 and remove duplicated Region.y
+df1<-merge(f_df5, f_df6, by.x = "Country", by.y = "Country") %>% select(-Region.y)
 
 #rename merge suffix .x = 2015, .y = 2016
 colnames(df1)[9:14] <- gsub('.{2}$', '.2016', colnames(df1)[9:14])
-colnames(df1)[1:8] <- gsub('.{2}$','.2015',colnames(df1)[1:8])
-colnames(df1)[1] = "Country"
+colnames(df1)[3:8] <- gsub('.{2}$','.2015',colnames(df1)[3:8])
 colnames(df1)[2] = 'Region'
+
 #add new columns for Y/Y changes
 df1 <- df1 %>% mutate(Happiness_Rank_Change=Happiness_Rank.2016 - Happiness_Rank.2015,Happiness_Score_Change=Happiness_Score.2016 - Happiness_Score.2015, GDP_Change = GDP.2016 - GDP.2015, Life_Expectancy_Change = Life_Expectancy.2016 - Life_Expectancy.2015, Government_Corruption_Change = Government_Corruption.2016 - Government_Corruption.2015)
 
@@ -63,6 +59,7 @@ head(top30dec)
 
 #### treepolots
 top25 <- df1 %>% arrange(Happiness_Rank.2015) %>% mutate(Country=factor(Country,Country)) %>% head(25)
+top25 <- df1 %>% arrange(Happiness_Rank.2015) %>% head(25)
 bottom25 <- df1 %>% arrange(Happiness_Rank.2015) %>% mutate(Country=factor(Country,Country)) %>% tail(25)
 
 top25_ <- df1 %>% arrange(Happiness_Rank.2016) %>% mutate(Country=factor(Country,Country)) %>% head(25)
@@ -127,24 +124,53 @@ treemap(bottom25_,
 z <- ggplot(df1)
 z_ <- ggplot(df1 %>% arrange(Happiness_Rank.2015) %>% mutate(Country=factor(Country,Country)) %>% head(80))
 z_1 <- ggplot(df1 %>% arrange(Happiness_Rank.2015) %>% mutate(Country=factor(Country,Country)) %>% tail(80))
-z + geom_point(aes(Happiness_Rank_Change,GDP_Change,color=Region),size=3,shape=18,alpha=.4) + theme_minimal() + scale_color_brewer(palette = 'RdBu') + geom_smooth(aes(Happiness_Rank_Change,GDP_Change))
+z + geom_point(aes(Happiness_Rank_Change,GDP_Change,color=Region),size=3,shape=18,alpha=.4) + 
+  theme_minimal() + 
+  scale_color_brewer(palette = 'RdBu') + 
+  geom_smooth(aes(Happiness_Rank_Change,GDP_Change))
 
-z_ + geom_pointrange(aes(Country,y=Happiness_Score.2016,ymin=Happiness_Score.2015,ymax=Happiness_Score.2016,color=Region),shape=15,alpha=.5) + theme_minimal() + scale_color_brewer(palette='RdBu') +  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + geom_pointrange(aes(Country,y=GDP.2016,ymin=GDP.2015,ymax=GDP.2016,color=Region),shape=18,alpha=.5) + geom_pointrange(aes(Country,y=Life_Expectancy.2016,ymin=Life_Expectancy.2015,ymax=Life_Expectancy.2016,color=Region),shape=16,alpha=.5)  #
+z_ + geom_pointrange(aes(Country,y=Happiness_Score.2016,ymin=Happiness_Score.2015,ymax=Happiness_Score.2016,color=Region),shape=15,alpha=.5) + 
+  theme_minimal() + 
+  scale_color_brewer(palette='RdBu') +  
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  geom_pointrange(aes(Country,y=GDP.2016,ymin=GDP.2015,ymax=GDP.2016,color=Region),shape=18,alpha=.5) + 
+  geom_pointrange(aes(Country,y=Life_Expectancy.2016,ymin=Life_Expectancy.2015,ymax=Life_Expectancy.2016,color=Region),shape=16,alpha=.5)  #
 
-z_1 + geom_pointrange(aes(Country,y=Happiness_Score.2016,ymin=Happiness_Score.2015,ymax=Happiness_Score.2016,color=Region),alpha=.5) + theme_minimal() + scale_color_brewer(palette='RdBu') +  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + coord_flip() #
+z_1 + geom_pointrange(aes(Country,y=Happiness_Score.2016,ymin=Happiness_Score.2015,ymax=Happiness_Score.2016,color=Region),alpha=.5) + 
+  theme_minimal() + 
+  scale_color_brewer(palette='RdBu') +  
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  coord_flip()
 
-g + geom_histogram(stat='identity') + theme_minimal() + scale_fill_brewer(palette = 'RdBu')  + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + xlab('') + ylab('Positive Change in Happiness Ranking 2015-2016)')  + ggtitle('Top 30 Countries with Improving Happiness Ranking 2015-2016')
-g + geom_histogram(stat='identity',alpha=.5) + theme_minimal() + scale_fill_brewer(palette = 'RdBu')  + theme(axis.text.x = element_text(angle = 60, hjust = 1)) + xlab('') + ylab('')  + ggtitle('Top 30 Countries with Improving Happiness Ranking 2015-2016') + coord_polar()
+
+g <- ggplot(top30inc,aes(x=Country,Happiness_Rank_Change,fill=Region))
+
+g + geom_histogram(stat='identity') + 
+  theme_minimal() + 
+  scale_fill_brewer(palette = 'RdBu')  + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  xlab('') + 
+  ylab('Positive Change in Happiness Ranking 2015-2016)')  + 
+  ggtitle('Top 30 Countries with Improving Happiness Ranking 2015-2016')
+
+g + geom_histogram(stat='identity',alpha=.5) + 
+  theme_minimal() + 
+  scale_fill_brewer(palette = 'RdBu')  + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  xlab('') + 
+  ylab('')  + 
+  ggtitle('Top 30 Countries with Improving Happiness Ranking 2015-2016') + 
+  coord_polar()
 
 
 plot_ly(df1,x=~Region,
         y=~Happiness_Score_Change,
         type="box",
         boxpoints="all",
-        title("Happiness Score Change By Region")
+        #title("Happiness Score Change By Region") #including this triggers error
         pointpos = -1.8,
         color=~Region,
-        colors = 'RdBu')%>%
+        colors = 'RdBu') %>%
   layout(xaxis=list(showticklabels = FALSE),
          margin=list(b = 40))
 
@@ -158,8 +184,22 @@ plot_ly(df1,x=~Happiness_Score_Change,
 
 
 h <- ggplot(top30dec,aes(x=Country,Happiness_Rank_Change,fill=Region))
-h + geom_histogram(stat='identity',alpha=.5) + theme_minimal() + scale_fill_brewer(palette='RdBu') + theme(axis.text.x=element_text(angle=60,hjust=1)) + xlab('') + ylab('Decrease in Happiness Ranking 2015 - 2016') + ggtitle('Top 30 Countries with Declining Happiness Ranking 2015-2016')
-h + geom_histogram(stat='identity',alpha=.5) + theme_minimal() + scale_fill_brewer(palette='RdBu') + theme(axis.text.x=element_text(angle=60,hjust=1)) + xlab('') + ylab('Decrease in Happiness Ranking 2015 - 2016') + ggtitle('Top 30 Countries with Declining Happiness Ranking 2015-2016') + coord_polar()
+h + geom_histogram(stat='identity',alpha=.5) + 
+  theme_minimal() + 
+  scale_fill_brewer(palette='RdBu') + 
+  theme(axis.text.x=element_text(angle=60,hjust=1)) + 
+  xlab('') + 
+  ylab('Decrease in Happiness Ranking 2015 - 2016') + 
+  ggtitle('Top 30 Countries with Declining Happiness Ranking 2015-2016')
+
+h + geom_histogram(stat='identity',alpha=.5) + 
+  theme_minimal() + 
+  scale_fill_brewer(palette='RdBu') + 
+  theme(axis.text.x=element_text(angle=60,hjust=1)) + 
+  xlab('') + 
+  ylab('Decrease in Happiness Ranking 2015 - 2016') + 
+  ggtitle('Top 30 Countries with Declining Happiness Ranking 2015-2016') + 
+  coord_polar()
 
 ggplot(df1,aes(Region,Happiness_Score_Change,fill=Region),alpha=.5) + geom_violin(alpha=0.5) + theme_minimal()  + scale_fill_brewer(palette = 'RdBu')+ theme(axis.text.x=element_text(angle=60,hjust=1)) + xlab('') + ylab('Change in Happiness Score 2015-2016')
 ggplot(df1,aes(Region,GDP_Change,fill=Region),alpha=.5) + geom_violin(alpha=0.5) + theme_minimal()  + scale_fill_brewer(palette = 'RdBu')+ theme(axis.text.x=element_text(angle=60,hjust=1)) + xlab('') + ylab('Change in GDP 2015-2016')
